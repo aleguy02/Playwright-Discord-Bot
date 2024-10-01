@@ -1,3 +1,5 @@
+# Need to figure out how to merge branch
+
 import os
 from dotenv import load_dotenv
 from groq import Groq
@@ -8,31 +10,33 @@ def create_summary(article_data: dict):
     client = Groq(
         api_key=os.getenv("GROQ_API_KEY")
     )
-    completion = client.chat.completions.create(
+    chat_completion = client.chat.completions.create(
         model="llama3-8b-8192",
         messages=[
             {
                 "role": "user",
-                "content": "You will be provided a news article's headline delimited in square braces and its article content delimited in parentheses. Follow the following set of instructions.\n1. Read the headline carefully. You should not output anything. The point of this step is for you to try to get an idea of what the article's content will be about.\n2. Read the following article critically, maintaining an unbiased and impartial perspective. Identify and extract key ideas, including significant words, numbers, names, and dates. Your goal is to create a framework that will allow you to write a concise summary of the article and a list of key political terms and concepts. Internally develop a chain of thought on how to summarize the article effectively. Do not output anything. \n3.  Write a summary of the article in one paragraph, limited to 7 sentences or less. This summary should capture the main ideas clearly and concisely. Create a list of key political terms and concepts relevant to the article. This list should include definitions or explanations tailored for individuals who may not be familiar with political jargon, aiming to enhance their understanding and confidence in interpreting political discussions."
-            },
-            {
-                "role": "assistant",
-                "content": "I'm ready to follow the instructions. Please provide the news article's headline and content. I'll perform the three steps and write the two paragraphs accordingly."
-            },
-            {
-                "role": "user",
-                "content": f"[{article_data["headline"]}]\n({article_data["article"]})"
+                "content": ("You are now an assistant whose goal to make political discussions more accessible to readers, especially those who are not familiar with political jargon. "
+                            "You will be provided a news article's headline delimited in square braces and its article content delimited in parentheses. Please create a concise summary of the article and a list of key political terms, simplifying the language to help build the reader’s confidence in understanding political topics. "
+                            "**Constraints**: "
+                            "1. **Unbiased Analysis**: You must analyze the article critically, without showing bias toward any political ideology. Your summary and key terms should be neutral and fact-based. "
+                            "2. **Focus on Key Information**: When processing the article, identify the most important points, including: "
+                            "- Major events or actions described "
+                            "- Names of key individuals or organizations "
+                            "- Dates or timelines "
+                            "- Important political terms and concepts "
+                            "3. **Summary**: After reading the article, write a concise, 1-paragraph summary of the main ideas. The summary should be neutral, clear, and provide an overview of the political issue or event discussed in the article. "
+                            "4. **Key Terms**: Identify 7 political terms or concepts that are central to the article. Identify and extract key ideas, including significant words, numbers, names, and dates. For each term, write a brief explanation that will help readers unfamiliar with political jargon understand the concept. Each explanation should focus on breaking down the meaning in an accessible way. "
+                            "5. **Format**: The summary and key terms should be provided in JSON format, structured as follows: "
+                            '{"summary": "Your 1-paragraph summary here", "key_terms": [{"term": "Political Term 1", "explanation": "Simplified explanation of the term."}, {"term": "Political Term 2", "explanation": "Simplified explanation of the term."}, {"term": "Political Term 3", "explanation": "Simplified explanation of the term."}, {"term": "Political Term 4", "explanation": "Simplified explanation of the term."}, {"term": "Political Term 5", "explanation": "Simplified explanation of the term."}, {"term": "Political Term 6", "explanation": "Simplified explanation of the term."}, {"term": "Political Term 7", "explanation": "Simplified explanation of the term."}]}'
+                            "IMPORTANT: REMEMBER YOUR RESPONS IS A STRINGIFIED JSON. DO NOT RESPOND IN ANY OTHER FORMAT. IF YOU ARE UNABLE TO FILL ANY OF THE FIELDS, PUT \"MISSING\" IN THE PLACE OF THE FIELDS CONTENT. "
+                            f"Here is the article's headline and contents: [{article_data["headline"]}], ({article_data["article"]})")
             }
         ],
-        temperature=1,
+        temperature=0.4,
         max_tokens=2048,
         top_p=1,
-        stream=True,
+        stream=False,
         stop=None,
     )
 
-    summary = ""
-    summary = "".join(chunk.choices[0].delta.content or "" for chunk in completion)
-
-
-    return summary
+    return chat_completion.choices[0].message.content
